@@ -28,6 +28,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
 .env*.local
 cypress.env.json
 
@@ -39,3 +40,5 @@ cypress.env.json
 next-env.d.ts
 
 
+# private
+PLAN.md
