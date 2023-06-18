@@ -1,10 +1,10 @@
 import { Octokit } from "@octokit/rest";
+// import { get } from "cypress/types/lodash";
+// import { get } from "cypress/types/lodash";
 import dotenv from "dotenv";
 
 dotenv.config();
 const token = process.env.GITHUB_TOKEN;
-
-// /user/repos
 
 const octokit = new Octokit({
     auth: token,
@@ -22,21 +22,7 @@ const getIssues = async (owner, repo) => {
         owner: owner,
         repo: repo,
     });
-    return issues;
-}
-
-const getIssuesForAllRepos = async (seed) => {
-    let issues = [];
-    for (let i = 0; i < seed.length; i++) {
-        const { owner, repo } = seed[i];
-        const issuesForRepo = await getIssues(owner, repo);
-        issues.push(issuesForRepo);
-    }
-    return issues;
-}
-
-const getUserfromIssue = (issue) => {
-    return issue.user.login;
+    return issues.data;
 }
 
 const getAllReposfromUser = async (user) => {
@@ -46,8 +32,18 @@ const getAllReposfromUser = async (user) => {
     return repos;
 }
 
-const main = async () => {
+const getChildrenFromRepo = async (owner, repo) => {
+    getIssues(owner, repo).then((issues) => {  
+        issues.forEach((issue) => {
+            getAllReposfromUser(issue.user.login).then((repos) => {
+                repos.data.forEach((repo) => {
+                    console.log(repo.html_url);
+                    // TODO: need to filter some of these links oe else it will be too much. GITHUB API unhappy :(
+                })
+            })
+        })
+    })
 
 }
 
-main();
+getChildrenFromRepo("facebook", "react");
