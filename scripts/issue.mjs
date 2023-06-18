@@ -56,7 +56,7 @@ const getChildrenFromRepo = async (owner, repo) => {
         users.forEach((user) => {
             getAllReposfromUser(user).then((repos) => {
                 repos.forEach((repo) => {
-                    console.log(repo);
+                    console.log(repo.html_url, repo.open_issues_count);
                 })
             })
         })
@@ -70,19 +70,5 @@ const getChildrenFromRepo = async (owner, repo) => {
 
 }
 
-// getChildrenFromRepo("tarvolds", "linux");
-getChildrenFromRepo("facebook", "react");
-
-
-// getIssues(owner, repo).then((issues) => {
-//     if (issues.length > 0) {
-//         issues.forEach((issue) => {
-//             console.log(issue.html_url);
-//             getAllReposfromUser(issue.user.login).then((repos) => {
-//                 repos.data.forEach((repo) => {
-//                     console.log(repo.html_url);
-//                 })
-//             })
-//         })
-//     }
-// })
+getChildrenFromRepo("tarvolds", "linux");
+// getChildrenFromRepo("facebook", "react");
