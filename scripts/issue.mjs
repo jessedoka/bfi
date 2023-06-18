@@ -1,6 +1,4 @@
 import { Octokit } from "@octokit/rest";
-// import { get } from "cypress/types/lodash";
-// import { get } from "cypress/types/lodash";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -22,28 +20,69 @@ const getIssues = async (owner, repo) => {
         owner: owner,
         repo: repo,
     });
-    return issues.data;
+    
+    // filter out pull requests
+    const filteredIssues = issues.data.filter((issue) => {
+        return issue.pull_request === undefined;
+    })
+
+    return filteredIssues;
 }
 
 const getAllReposfromUser = async (user) => {
     const repos = await octokit.repos.listForUser({
         username: user,
     });
-    return repos;
+
+    const filteredRepos = repos.data.filter((repo) => {
+        return repo.fork === false && repo.open_issues_count > 0 && repo.archived === false;
+    })
+
+    return filteredRepos;
+
+    
+    // return repos.data;
 }
 
 const getChildrenFromRepo = async (owner, repo) => {
-    getIssues(owner, repo).then((issues) => {  
+    try {
+        const issues = await getIssues(owner, repo);
+        let users = [];
+
         issues.forEach((issue) => {
-            getAllReposfromUser(issue.user.login).then((repos) => {
-                repos.data.forEach((repo) => {
-                    console.log(repo.html_url);
-                    // TODO: need to filter some of these links oe else it will be too much. GITHUB API unhappy :(
+            users.push(issue.user.login);
+        })
+
+        users.forEach((user) => {
+            getAllReposfromUser(user).then((repos) => {
+                repos.forEach((repo) => {
+                    console.log(repo);
                 })
             })
         })
-    })
+
+
+        
+    } catch (error) {
+        return error;
+    }
+    
 
 }
 
+// getChildrenFromRepo("tarvolds", "linux");
 getChildrenFromRepo("facebook", "react");
+
+
+// getIssues(owner, repo).then((issues) => {
+//     if (issues.length > 0) {
+//         issues.forEach((issue) => {
+//             console.log(issue.html_url);
+//             getAllReposfromUser(issue.user.login).then((repos) => {
+//                 repos.data.forEach((repo) => {
+//                     console.log(repo.html_url);
+//                 })
+//             })
+//         })
+//     }
+// })
