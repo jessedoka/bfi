@@ -56,19 +56,22 @@ const getChildrenFromRepo = async (owner, repo) => {
         users.forEach((user) => {
             getAllReposfromUser(user).then((repos) => {
                 repos.forEach((repo) => {
-                    console.log(repo.html_url, repo.open_issues_count);
+                    // check if repo is already in seed
+                    let found = seed.find((seedRepo) => {
+                        return seedRepo.owner === repo.owner.login && seedRepo.repo === repo.name;
+                    })
+
+                    if (found === undefined) {
+                        seed.push({
+                            "owner": repo.owner.login,
+                            "repo": repo.name,
+                        })
+                    }
                 })
             })
         })
-
-
         
     } catch (error) {
         return error;
     }
-    
-
 }
-
-getChildrenFromRepo("tarvolds", "linux");
-// getChildrenFromRepo("facebook", "react");
