@@ -1,7 +1,5 @@
 import { Octokit } from "@octokit/rest";
-import dotenv from "dotenv";
 
-dotenv.config();
 const token = process.env.GITHUB_TOKEN;
 
 const octokit = new Octokit({
@@ -12,6 +10,9 @@ let seed = [
     {
         "owner": "facebook",
         "repo": "react",
+        "issues": 0,
+        "parent": null,
+
     }
 ]
 
@@ -23,7 +24,7 @@ const getIssues = async (owner, repo) => {
     
     // filter out pull requests
     const filteredIssues = issues.data.filter((issue) => {
-        return issue.pull_request === undefined;
+        return issue.pull_request === undefined && issue.state === "open";
     })
 
     return filteredIssues;
@@ -57,16 +58,26 @@ const getChildrenFromRepo = async (owner, repo) => {
             getAllReposfromUser(user).then((repos) => {
                 repos.forEach((repo) => {
                     // check if repo is already in seed
-                    let found = seed.find((seedRepo) => {
-                        return seedRepo.owner === repo.owner.login && seedRepo.repo === repo.name;
+                    let exists = false;
+                    seed.forEach((seedRepo) => {
+                        if (seedRepo.owner === repo.owner.login && seedRepo.repo === repo.name) {
+                            exists = true;
+                        }
                     })
 
-                    if (found === undefined) {
+                    if (!exists) {
                         seed.push({
                             "owner": repo.owner.login,
                             "repo": repo.name,
+                            "issues": repo.open_issues_count,
+                            "parent": {
+                                "owner": owner,
+                                "repo": repo,
+                            }
                         })
                     }
+                    
+                    getChildrenFromRepo(repo.owner.login, repo.name);
                 })
             })
         })
@@ -75,3 +86,11 @@ const getChildrenFromRepo = async (owner, repo) => {
         return error;
     }
 }
+
+seed.forEach((repo) => {
+    getChildrenFromRepo(repo.owner, repo.repo);
+
+    setTimeout(() => {
+        console.log(seed);
+    }, 5000)
+})
