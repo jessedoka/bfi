@@ -1,4 +1,5 @@
 import { Octokit } from "@octokit/rest";
+import { get } from "http";
 
 const token = process.env.GITHUB_TOKEN;
 
@@ -6,22 +7,20 @@ const octokit = new Octokit({
     auth: token,
 });
 
-let seed = [
-    {
-        "owner": "facebook",
-        "repo": "react",
-        "issues": 0,
-        "parent": null,
-
-    }
-]
-
 const getIssues = async (owner, repo) => {
     const issues = await octokit.issues.listForRepo({
         owner: owner,
         repo: repo,
     });
-    
+
+    // get every issue with the label "good first issue"
+
+    const goodFirstIssues = issues.data.filter((issue) => {
+        return issue.labels.find((label) => {
+            return label.name === "good first issue";
+        })
+    })
+
     // filter out pull requests
     const filteredIssues = issues.data.filter((issue) => {
         return issue.pull_request === undefined && issue.state === "open";
@@ -49,36 +48,13 @@ const getChildrenFromRepo = async (owner, repo) => {
     try {
         const issues = await getIssues(owner, repo);
         let users = [];
-
         issues.forEach((issue) => {
             users.push(issue.user.login);
         })
 
         users.forEach((user) => {
             getAllReposfromUser(user).then((repos) => {
-                repos.forEach((repo) => {
-                    // check if repo is already in seed
-                    let exists = false;
-                    seed.forEach((seedRepo) => {
-                        if (seedRepo.owner === repo.owner.login && seedRepo.repo === repo.name) {
-                            exists = true;
-                        }
-                    })
-
-                    if (!exists) {
-                        seed.push({
-                            "owner": repo.owner.login,
-                            "repo": repo.name,
-                            "issues": repo.open_issues_count,
-                            "parent": {
-                                "owner": owner,
-                                "repo": repo,
-                            }
-                        })
-                    }
-                    
-                    getChildrenFromRepo(repo.owner.login, repo.name);
-                })
+                console.log(repos)
             })
         })
         
@@ -87,10 +63,16 @@ const getChildrenFromRepo = async (owner, repo) => {
     }
 }
 
-seed.forEach((repo) => {
-    getChildrenFromRepo(repo.owner, repo.repo);
+getChildrenFromRepo("facebook", "react");
 
-    setTimeout(() => {
-        console.log(seed);
-    }, 5000)
-})
+let seed = [
+    {
+        owner: "facebook",
+        repo: "react",
+        parent: null,
+        issues: await getIssues("facebook", "react"),
+        // children: await getChildrenFromRepo("facebook", "react"),
+    }
+];
+
+// console.log(seed);
