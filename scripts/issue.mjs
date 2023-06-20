@@ -1,5 +1,4 @@
 import { Octokit } from "@octokit/rest";
-import { get } from "http";
 
 const token = process.env.GITHUB_TOKEN;
 
@@ -13,20 +12,32 @@ const getIssues = async (owner, repo) => {
         repo: repo,
     });
 
-    // get every issue with the label "good first issue"
+    var gfiPattern = /good\sfirst\sissue/i
 
-    const goodFirstIssues = issues.data.filter((issue) => {
-        return issue.labels.find((label) => {
-            return label.name === "good first issue";
+    // filtered issues must have a label of good first issue
+
+    const filteredIssues = issues.data.filter((issue) => {
+        return issue.labels.some((label) => {
+            return gfiPattern.test(label.name);
         })
     })
 
-    // filter out pull requests
-    const filteredIssues = issues.data.filter((issue) => {
-        return issue.pull_request === undefined && issue.state === "open";
+    const parsedIssues = filteredIssues.map((issue) => {
+        return {
+            title: issue.title,
+            url: issue.html_url,
+            body: issue.body,
+            // parse label to only show name
+            label: issue.labels.map((label) => {
+                return label.name;
+            }),
+            user: issue.user.login
+        }
     })
 
-    return filteredIssues;
+    return parsedIssues
+
+
 }
 
 const getAllReposfromUser = async (user) => {
@@ -63,16 +74,7 @@ const getChildrenFromRepo = async (owner, repo) => {
     }
 }
 
-getChildrenFromRepo("facebook", "react");
 
-let seed = [
-    {
-        owner: "facebook",
-        repo: "react",
-        parent: null,
-        issues: await getIssues("facebook", "react"),
-        // children: await getChildrenFromRepo("facebook", "react"),
-    }
-];
-
-// console.log(seed);
+getIssues("j-doka", "reacton").then((issues) => {
+    console.log(issues);
+})
